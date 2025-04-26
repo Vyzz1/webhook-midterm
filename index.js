@@ -143,6 +143,10 @@ app.post("/webhook/stripe", async (req, res) => {
   res.status(200).send("Received webhook event");
 });
 
+app.get("/", (req, res) => {
+  res.send("Hello World! This is the webhook server for Stripe and Appwrite.");
+});
+
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
