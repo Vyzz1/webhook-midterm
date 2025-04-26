@@ -9,18 +9,12 @@ import Stripe from "stripe";
 dotenv.config();
 const app = express();
 
-app.use(express.json());
+// Use express.raw() for the Stripe webhook
+app.use("/webhook/stripe", express.raw({ type: "application/json" }));
 
+// URL-encoded parsing for other routes, if needed
 app.use(express.urlencoded({ extended: true }));
 
-app.use(
-  "/webhook/stripe",
-  express.raw({ type: "application/json" }),
-  (req, res, next) => {
-    req.rawBody = req.body;
-    next();
-  }
-);
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
@@ -47,6 +41,7 @@ transporter.use(
     extName: ".hbs",
   })
 );
+
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
@@ -55,14 +50,15 @@ app.post("/webhook/stripe", async (req, res) => {
 
   let event;
   try {
-    event = stripe.webhooks.constructEvent(req.rawBody, sig, webhookSecret);
+    // Use req.body directly, which is the raw Buffer from express.raw()
+    event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
   } catch (err) {
     console.error("Webhook signature verification failed:", err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
   if (event.type === "payment_intent.created") {
-    const paymentIntent = event.data.object; // ✅ Correctly get paymentIntent
+    const paymentIntent = event.data.object;
 
     try {
       const databaseId = process.env.APPWRITE_DATABASE_ID;
@@ -84,7 +80,7 @@ app.post("/webhook/stripe", async (req, res) => {
           }
         );
 
-        transporter.sendMail({
+        await transporter.sendMail({
           from: `"Your Company" <${process.env.EMAIL_USER}>`,
           to: paymentDoc.owner.email,
           subject: "Payment Confirmation",
