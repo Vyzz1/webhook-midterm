@@ -65,7 +65,7 @@ app.post("/webhook/stripe", async (req, res) => {
       const collectionId = process.env.APPWRITE_PAYMENT_COLLECTION_ID;
 
       const response = await databases.listDocuments(databaseId, collectionId, [
-        Query.equal("payment_id", paymentIntent.id),
+        Query.equal("payment_id", paymentIntent.data.object.id),
       ]);
 
       if (response.documents.length > 0) {
