@@ -60,6 +60,10 @@ app.post("/webhook/stripe", async (req, res) => {
   if (event.type === "payment_intent.created") {
     const paymentIntent = event.data.object;
 
+    console.log(event);
+
+    console.log("Payment Intent Created:", paymentIntent);
+
     try {
       const databaseId = process.env.APPWRITE_DATABASE_ID;
       const collectionId = process.env.APPWRITE_PAYMENT_COLLECTION_ID;
