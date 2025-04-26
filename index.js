@@ -9,12 +9,10 @@ import Stripe from "stripe";
 dotenv.config();
 const app = express();
 
-// Use express.raw() for the Stripe webhook
 app.use("/webhook/stripe", express.raw({ type: "application/json" }));
 
-// URL-encoded parsing for other routes, if needed
+app.use(express.json()); // <-- JSON parser
 app.use(express.urlencoded({ extended: true }));
-
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
@@ -50,7 +48,6 @@ app.post("/webhook/stripe", async (req, res) => {
 
   let event;
   try {
-    // Use req.body directly, which is the raw Buffer from express.raw()
     event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
   } catch (err) {
     console.error("Webhook signature verification failed:", err.message);
@@ -69,7 +66,7 @@ app.post("/webhook/stripe", async (req, res) => {
       const collectionId = process.env.APPWRITE_PAYMENT_COLLECTION_ID;
 
       const response = await databases.listDocuments(databaseId, collectionId, [
-        Query.equal("payment_id", paymentIntent.data.object.id),
+        Query.equal("payment_id", paymentIntent.id),
       ]);
 
       if (response.documents.length > 0) {
