@@ -59,26 +59,67 @@ app.post("/webhook/stripe", async (req, res) => {
 
     try {
       const databaseId = process.env.APPWRITE_DATABASE_ID;
-      const collectionId = process.env.APPWRITE_PAYMENT_COLLECTION_ID;
+      const paymentCollectionId = process.env.APPWRITE_PAYMENT_COLLECTION_ID;
 
-      const response = await databases.listDocuments(databaseId, collectionId, [
-        Query.equal("payment_id", paymentIntent.id),
-      ]);
+      const userCollectionId = process.env.APPWRITE_USERS_COLLECTION_ID;
+
+      if (!databaseId || !paymentCollectionId || !userCollectionId) {
+        console.error("Missing required environment variables.");
+        return res.status(500).send("Internal Server Error");
+      }
+
+      const response = await databases.listDocuments(
+        databaseId,
+        paymentCollectionId,
+        [Query.equal("payment_id", paymentIntent.id)]
+      );
 
       if (response.documents.length > 0) {
         const paymentDoc = response.documents[0];
 
         await databases.updateDocument(
           databaseId,
-          collectionId,
+          paymentCollectionId,
           paymentDoc.$id,
           {
             success: true,
           }
         );
 
-        await transporter.sendMail({
-          from: `"Your Company" <${process.env.EMAIL_USER}>`,
+        let totalMB = 0;
+
+        switch (paymentDoc.size) {
+          case "1GB":
+            totalMB = 1024;
+            break;
+          case "500MB":
+            totalMB = 512;
+            break;
+          case "2GB":
+            totalMB = 2048;
+            break;
+          default:
+            break;
+        }
+
+        await databases.updateDocument(
+          databaseId,
+          userCollectionId,
+          paymentDoc.owner.$id,
+          {
+            totalStorage:
+              paymentDoc.owner.totalStorage !== null
+                ? paymentDoc.owner.totalStorage + totalMB
+                : totalMB,
+          }
+        );
+
+        console.log("Updated user storage successfully");
+
+        //update user storage
+
+        transporter.sendMail({
+          from: `"Cloud Storage" <${process.env.EMAIL_USER}>`,
           to: paymentDoc.owner.email,
           subject: "Payment Confirmation",
           template: "payment-confirmation",
