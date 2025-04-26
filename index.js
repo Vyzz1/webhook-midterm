@@ -11,7 +11,7 @@ const app = express();
 
 app.use("/webhook/stripe", express.raw({ type: "application/json" }));
 
-app.use(express.json()); // <-- JSON parser
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -57,10 +57,6 @@ app.post("/webhook/stripe", async (req, res) => {
   if (event.type === "payment_intent.created") {
     const paymentIntent = event.data.object;
 
-    console.log(event);
-
-    console.log("Payment Intent Created:", paymentIntent);
-
     try {
       const databaseId = process.env.APPWRITE_DATABASE_ID;
       const collectionId = process.env.APPWRITE_PAYMENT_COLLECTION_ID;
@@ -87,7 +83,7 @@ app.post("/webhook/stripe", async (req, res) => {
           subject: "Payment Confirmation",
           template: "payment-confirmation",
           context: {
-            email: paymentDoc.owner.email,
+            fullName: paymentDoc.owner.fullName,
             amount: (paymentIntent.amount / 100).toFixed(2),
             label: paymentDoc.label,
             size: paymentDoc.size,
