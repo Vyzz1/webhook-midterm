@@ -13,8 +13,10 @@
   "dependencies": {
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
+    "express-handlebars": "^8.0.3",
     "node-appwrite": "^16.0.0",
     "nodemailer": "^6.10.1",
-    "nodemailer-express-handlebars": "^7.0.0"
+    "nodemailer-express-handlebars": "^7.0.0",
+    "stripe": "^18.0.0"
   }
 }

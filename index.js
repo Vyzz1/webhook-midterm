@@ -4,6 +4,7 @@ import { Client, Databases, Query } from "node-appwrite";
 import nodemailer from "nodemailer";
 import hbs from "nodemailer-express-handlebars";
 import path from "path";
+import Stripe from "stripe";
 
 dotenv.config();
 const app = express();
@@ -53,14 +54,16 @@ app.post("/webhook/stripe", async (req, res) => {
   const sig = req.headers["stripe-signature"];
 
   let event;
+  try {
+    event = stripe.webhooks.constructEvent(req.rawBody, sig, webhookSecret);
+  } catch (err) {
+    console.error("Webhook signature verification failed:", err.message);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
 
   if (event.type === "payment_intent.created") {
-    try {
-      event = stripe.webhooks.constructEvent(req.rawBody, sig, webhookSecret);
-    } catch (err) {
-      console.error("Webhook signature verification failed:", err.message);
-      return res.status(400).send(`Webhook Error: ${err.message}`);
-    }
+    const paymentIntent = event.data.object; // ✅ Correctly get paymentIntent
+
     try {
       const databaseId = process.env.APPWRITE_DATABASE_ID;
       const collectionId = process.env.APPWRITE_PAYMENT_COLLECTION_ID;
@@ -99,7 +102,7 @@ app.post("/webhook/stripe", async (req, res) => {
         );
       }
     } catch (error) {
-      console.error("Error processing payment_intent.succeeded:", error);
+      console.error("Error processing payment_intent.created:", error);
     }
   }
 
