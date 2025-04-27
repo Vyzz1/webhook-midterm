@@ -118,8 +118,9 @@ app.post("/webhook/stripe", async (req, res) => {
 
         console.log("sending email to user");
 
-        transporter.sendMail(
-          {
+        console.log("sending email to user");
+        try {
+          const info = await transporter.sendMail({
             from: `"Cloud Storage" <${process.env.EMAIL_USER}>`,
             to: paymentDoc.owner.email,
             subject: "Payment Confirmation",
@@ -130,15 +131,13 @@ app.post("/webhook/stripe", async (req, res) => {
               label: paymentDoc.label,
               size: paymentDoc.size,
             },
-          },
-          (error, info) => {
-            if (error) {
-              console.error("Error sending email:", error);
-            } else {
-              console.log("Email sent successfully:", info.response);
-            }
-          }
-        );
+          });
+          console.log("Email sent successfully:", info.response);
+        } catch (error) {
+          console.error("Error sending email:", error);
+        }
+
+        res.status(200).send("Received webhook event");
       } else {
         console.warn(
           `No payment record found for payment_id=${paymentIntent.id}`
