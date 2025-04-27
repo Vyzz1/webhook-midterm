@@ -116,20 +116,29 @@ app.post("/webhook/stripe", async (req, res) => {
 
         console.log("Updated user storage successfully");
 
-        //update user storage
+        console.log("sending email to user");
 
-        transporter.sendMail({
-          from: `"Cloud Storage" <${process.env.EMAIL_USER}>`,
-          to: paymentDoc.owner.email,
-          subject: "Payment Confirmation",
-          template: "payment-confirmation",
-          context: {
-            fullName: paymentDoc.owner.fullName,
-            amount: (paymentIntent.amount / 100).toFixed(2),
-            label: paymentDoc.label,
-            size: paymentDoc.size,
+        transporter.sendMail(
+          {
+            from: `"Cloud Storage" <${process.env.EMAIL_USER}>`,
+            to: paymentDoc.owner.email,
+            subject: "Payment Confirmation",
+            template: "payment-confirmation",
+            context: {
+              fullName: paymentDoc.owner.fullName,
+              amount: (paymentIntent.amount / 100).toFixed(2),
+              label: paymentDoc.label,
+              size: paymentDoc.size,
+            },
           },
-        });
+          (error, info) => {
+            if (error) {
+              console.error("Error sending email:", error);
+            } else {
+              console.log("Email sent successfully:", info.response);
+            }
+          }
+        );
       } else {
         console.warn(
           `No payment record found for payment_id=${paymentIntent.id}`
