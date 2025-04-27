@@ -54,7 +54,7 @@ app.post("/webhook/stripe", async (req, res) => {
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
-  if (event.type === "payment_intent.created") {
+  if (event.type === "payment_intent.succeeded") {
     const paymentIntent = event.data.object;
 
     try {
@@ -120,7 +120,7 @@ app.post("/webhook/stripe", async (req, res) => {
 
         //update user storage
 
-        await transporter.sendMail({
+        transporter.sendMail({
           from: `"Cloud Storage" <${process.env.EMAIL_USER}>`,
           to: paymentDoc.owner.email,
           subject: "Payment Confirmation",
