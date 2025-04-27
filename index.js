@@ -116,8 +116,6 @@ app.post("/webhook/stripe", async (req, res) => {
 
         console.log("Updated user storage successfully");
 
-        console.log(paymentDoc.owner);
-
         //update user storage
 
         transporter.sendMail({
