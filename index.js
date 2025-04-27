@@ -116,9 +116,11 @@ app.post("/webhook/stripe", async (req, res) => {
 
         console.log("Updated user storage successfully");
 
+        console.log(paymentDoc.owner);
+
         //update user storage
 
-        transporter.sendMail({
+        await transporter.sendMail({
           from: `"Cloud Storage" <${process.env.EMAIL_USER}>`,
           to: paymentDoc.owner.email,
           subject: "Payment Confirmation",
@@ -134,6 +136,8 @@ app.post("/webhook/stripe", async (req, res) => {
         console.warn(
           `No payment record found for payment_id=${paymentIntent.id}`
         );
+
+        return res.status(404).send("Payment record not found");
       }
     } catch (error) {
       console.error("Error processing payment_intent.created:", error);
