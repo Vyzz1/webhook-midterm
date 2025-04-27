@@ -153,7 +153,41 @@ app.post("/webhook/stripe", async (req, res) => {
 
   res.status(200).send("Received webhook event");
 });
+app.get("/test-email", async (req, res) => {
+  try {
+    const info = await transporter.sendMail({
+      from: `"Cloud Storage" <${process.env.EMAIL_USER}>`,
+      to: "vyauth28@gmail.com", // Use your email for testing
+      subject: "Test Email",
+      template: "payment-confirmation",
+      context: {
+        fullName: "Test User",
+        amount: "10.00",
+        label: "Test Label",
+        size: "1GB",
+      },
+    });
+    res.send("Email sent successfully: " + info.response);
+  } catch (error) {
+    console.error("Error sending test email:", error);
+    res.status(500).send("Error sending email: " + error.message);
+  }
+});
 
+app.get("/test-plain-email", async (req, res) => {
+  try {
+    const info = await transporter.sendMail({
+      from: `"Cloud Storage" <${process.env.EMAIL_USER}>`,
+      to: "vyauth28@gmail.com",
+      subject: "Test Plain Email",
+      text: "This is a test email without using templates. If you receive this, we know the template is the issue.",
+    });
+    res.send("Plain email sent successfully: " + info.response);
+  } catch (error) {
+    console.error("Error sending test email:", error);
+    res.status(500).send("Error sending email: " + error.message);
+  }
+});
 app.get("/", (req, res) => {
   res.send("Hello World! This is the webhook server for Stripe and Appwrite.");
 });
